@@ -15,7 +15,7 @@
     "url": "git+https://github.com/shpetimselaci/vending-machine-api.git"
   },
   "engines": {
-    "node": "16.14.0"
+    "node": ">=16.14.0"
   },
   "keywords": [],
   "author": "",
