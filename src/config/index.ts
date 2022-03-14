@@ -27,6 +27,7 @@ declare module "fastify" {
   interface FastifyInstance {
     config: {
       PORT: string;
+      TEST_PORT: string;
       MONGO_DB_URI: string;
       MONGO_DB_TEST_URI: string;
       SESSION_SECRET: string;

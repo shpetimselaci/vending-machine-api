@@ -12,6 +12,8 @@ export interface IUser {
   password: string;
   deposit: number;
   role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type TUserModel = Model<IUser, unknown, IUser>;

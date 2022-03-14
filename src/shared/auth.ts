@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { FastifyInstance, FastifyPluginAsync, RouteHandlerMethod } from "fastify";
 import { IUser } from "@/models/user";
+import { Forbidden, UnAuthenticated } from "./errors";
 
 declare module "fastify" {
   interface Session {
@@ -24,14 +25,12 @@ export const hashPassword = async (plainTextPassword: string) => {
 
 const isAuthenticated: RouteHandlerMethod = function isAuthenticated(request) {
   if (!request.session?.user?.authenticated) {
-    throw new Error("User must be authenticated!");
+    throw UnAuthenticated("User must be authenticated!");
   }
 
-  const userSessions = request.sessionStore.get(request?.session?.user.username, (err) => {
-    console.log(err);
-  });
-
-  console.log(userSessions);
+  // const userSessions = request.sessionStore.get(request?.session?.user.username, (err) => {
+  //   console.log(err);
+  // });
 };
 
 export const addProtectedRouteDecoration: FastifyPluginAsync = async (fastify: FastifyInstance) => {

@@ -145,7 +145,7 @@ export const updateProduct: RouteHandlerFunction = (server) =>
   );
 
 export const deleteProduct: RouteHandlerFunction = (server) =>
-  server.delete<GetProductRouteOptionsType>("/product/:id", createProductOptions(server), async (request, reply) => {
+  server.delete<GetProductRouteOptionsType>("/products/:id", createProductOptions(server), async (request, reply) => {
     try {
       const product = await server.db.models.Product.findOneAndDelete({ id: request.params.id });
 

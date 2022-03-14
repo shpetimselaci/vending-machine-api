@@ -20,8 +20,9 @@ export const startServer = async () => {
   await server.register(cookie);
 
   await server.register(cors);
+  const mongodbURI = process.env.NODE_ENV === "test" ? server.config.MONGO_DB_TEST_URI : server.config.MONGO_DB_URI;
   await server.register(db, {
-    uri: process.env.NODE_ENV === "test" ? server.config.MONGO_DB_TEST_URI : server.config.MONGO_DB_URI
+    uri: mongodbURI
   });
 
   await server.register(fastifySession, {
@@ -29,7 +30,7 @@ export const startServer = async () => {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: !["development", "test"].includes(process.env.NODE_ENV!)
+      secure: false
     },
     store: MongoStore.create({ client: server.db.client, collectionName: "sessions" }),
     logLevel: "debug"
@@ -41,8 +42,9 @@ export const startServer = async () => {
 
   controllers.forEach((addRoute) => addRoute(server));
 
+  const port = process.env.NODE_ENV === "test" ? server.config.TEST_PORT : server.config.PORT;
   return new Promise((resolve, reject) => {
-    server.listen(Number(server.config.PORT), (err, address) => {
+    server.listen(Number(port), (err, address) => {
       if (err) {
         console.error(err);
         reject(err);

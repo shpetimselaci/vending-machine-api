@@ -30,7 +30,6 @@ test("Testing whether the only get endpoint works", async () => {
   });
 
   const cookie = login.headers["set-cookie"];
-
   expect(cookie).toBeTypeOf("string");
   const { body, statusCode, headers, cookies } = await server.inject({
     url: "http://localhost:2000/logout",

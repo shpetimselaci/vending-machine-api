@@ -1,36 +1,8 @@
-import { Static, Type } from "@sinclair/typebox";
-import { UserRole } from "@/models/user";
+import { Static } from "@sinclair/typebox";
 import { comparePassword, hashPassword } from "@/shared/auth";
 import { RouteHandlerFunction, RouteHandlerSchema } from "@/types";
 import { BadRequest } from "@/shared/errors";
-
-const User = Type.Object(
-  {
-    // for swagger
-    username: Type.String({ minimum: 6 }),
-    deposit: Type.Number({ minimum: 0 }),
-    role: Type.Enum(UserRole),
-    createdAt: Type.String(),
-    updatedAt: Type.String()
-  },
-  { additionalProperties: false, description: "User Model" }
-);
-const CreateUserSchema = Type.Object(
-  {
-    username: Type.String({ minLength: 6 }),
-    role: Type.Enum(UserRole),
-    password: Type.String({ minLength: 6 })
-  },
-  { additionalProperties: false, description: "Sign up body params needed to create user" }
-);
-
-const LoginSchema = Type.Object(
-  {
-    username: Type.String({ minimum: 3 }),
-    password: Type.String({ minimum: 7 })
-  },
-  { additionalProperties: false }
-);
+import { CreateUserSchema, LoginSchema, User } from "./schema";
 
 type SignUpRouteOptionsType = { Body: Static<typeof CreateUserSchema> };
 
@@ -84,18 +56,21 @@ export const login: RouteHandlerFunction = (server) =>
         authenticated: true,
         username: user.username,
         role: user.role,
-        deposit: user.deposit
+        deposit: user.deposit,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
       };
+
+      request.session.user = formattedUser;
+
       new Promise((resolve, reject) =>
-        request.sessionStore.set(user.username, request.session, (err) => {
+        request.sessionStore.set(request.session.sessionId, request.session, (err) => {
           if (err) {
             reject(err);
           }
           resolve("");
         })
       );
-
-      request.session.user = formattedUser;
 
       return user;
     }

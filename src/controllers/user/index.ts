@@ -1,48 +1,19 @@
-import { RouteShorthandOptions } from "fastify";
-import { Static, Type } from "@sinclair/typebox";
-import { UserRole } from "@/models/user";
-import { RouteHandlerFunction } from "@/types";
+import { RouteHandlerFunction, RouteHandlerSchema } from "@/types";
+import { User } from "../auth/schema";
 
-const User = Type.Object(
-  {
-    // for swagger
-    username: Type.Integer({ minimum: 0 }),
-    deposit: Type.Number({ minimum: 0 }),
-    role: Type.Enum(UserRole),
-    createdAt: Type.String(),
-    updatedAt: Type.String()
-  },
-  { additionalProperties: false }
-);
-
-const GetProduct = Type.Object(
-  {
-    id: Type.String()
-  },
-  { additionalProperties: false }
-);
-
-type GetProductRouteOptionsType = {
-  Params: Static<typeof GetProduct>;
-};
-
-const getProductIdOptions: RouteShorthandOptions = {
+const getUser: RouteHandlerSchema = (server) => ({
   schema: {
-    params: GetProduct,
     response: {
       200: User
     }
-  }
-};
+  },
+  preHandler: server.authenticated
+});
 
 export const me: RouteHandlerFunction = (server) =>
-  server.get<GetProductRouteOptionsType>("/user/me", getProductIdOptions, async (request, reply) => {
-    try {
-      return request.session;
-    } catch (error) {
-      request.log.error(error);
-      return reply.send(500);
-    }
+  server.get("/user/me", getUser(server), async (request) => {
+    console.log(request.session.user);
+    return request.session.user;
   });
 
 export default [me];
