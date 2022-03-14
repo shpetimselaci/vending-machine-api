@@ -29,7 +29,6 @@ export const startServer = async () => {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-
       secure: !["development", "test"].includes(process.env.NODE_ENV!)
     },
     store: MongoStore.create({ client: server.db.client, collectionName: "sessions" }),
