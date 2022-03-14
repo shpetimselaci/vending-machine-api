@@ -1,4 +1,6 @@
 node_modules
 dist
-**.js
+**/**.js
 package-lock.json
+.env
+build

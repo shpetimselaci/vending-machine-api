@@ -1,6 +1,6 @@
 import { beforeAll, test, expect } from "vitest";
 import { request } from "undici";
-import startServer from "../src/index";
+import { startServer } from "server";
 
 beforeAll(async () => {
   await startServer();
