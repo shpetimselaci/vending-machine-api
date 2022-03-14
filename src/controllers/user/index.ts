@@ -13,7 +13,7 @@ const getUser: RouteHandlerSchema = (server) => ({
 export const me: RouteHandlerFunction = (server) =>
   server.get("/user/me", getUser(server), async (request) => {
     console.log(request.session.user);
-    return request.session.user;
+    return request?.session?.user;
   });
 
 export default [me];

@@ -1,9 +1,9 @@
 import createError from "http-errors";
 
-export const Forbidden = (msg = "Forbidden") => createError(403, msg);
+export const Forbidden = (msg?: string) => new createError.Forbidden(msg);
 
-export const UnAuthenticated = (msg = "You are not authenticated") => createError(401, msg);
+export const UnAuthenticated = (msg?: string) => new createError.Unauthorized(msg);
 
-export const NotFound = (msg = "Not found") => createError(404, msg);
+export const NotFound = (msg?: string) => new createError.NotFound(msg);
 
-export const BadRequest = (msg = "Bad Request") => createError(400, msg);
+export const BadRequest = (msg?: string) => new createError.BadRequest(msg);

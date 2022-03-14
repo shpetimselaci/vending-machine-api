@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import { FastifyInstance, FastifyPluginAsync, RouteHandlerMethod } from "fastify";
 import { IUser } from "@/models/user";
-import { Forbidden, UnAuthenticated } from "./errors";
+import { UnAuthenticated } from "./errors";
+import fp from "fastify-plugin";
 
 declare module "fastify" {
   interface Session {
@@ -23,20 +24,19 @@ export const hashPassword = async (plainTextPassword: string) => {
   return bcrypt.hash(plainTextPassword, salt);
 };
 
-const isAuthenticated: RouteHandlerMethod = function isAuthenticated(request) {
+const isAuthenticated: RouteHandlerMethod = (request) => {
   if (!request.session?.user?.authenticated) {
-    throw UnAuthenticated("User must be authenticated!");
+    throw UnAuthenticated();
   }
+
+  return;
 
   // const userSessions = request.sessionStore.get(request?.session?.user.username, (err) => {
   //   console.log(err);
-  // });
+  // };
+};
+const addAuthenticatorDecoration: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  fastify.decorate("authenticated", isAuthenticated);
 };
 
-export const addProtectedRouteDecoration: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  try {
-    fastify.decorate("authenticated", isAuthenticated);
-  } catch (err) {
-    console.warn(err);
-  }
-};
+export default fp(addAuthenticatorDecoration);

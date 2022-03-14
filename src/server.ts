@@ -7,10 +7,8 @@ import swagger from "fastify-swagger";
 import cookie from "fastify-cookie";
 import fastifyEnv from "fastify-env";
 import { Config } from "@/config";
-import { addProtectedRouteDecoration } from "@/shared/auth";
+import authValidatior from "@/shared/auth";
 import { controllers } from "@/controllers";
-// import { addProtectedRouteDecoration } from "@shared/auth";
-// import { controllers } from "controllers";
 
 const server = fastify({ logger: true });
 
@@ -36,7 +34,7 @@ export const startServer = async () => {
     logLevel: "debug"
   });
 
-  await server.register(addProtectedRouteDecoration);
+  await server.register(authValidatior);
 
   await server.register(swagger, { routePrefix: `/swagger`, exposeRoute: true, openapi: {} });
 

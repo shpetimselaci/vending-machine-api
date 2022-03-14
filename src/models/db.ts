@@ -23,30 +23,26 @@ declare module "fastify" {
 }
 
 const connectDB: FastifyPluginAsync<{ uri: string }> = async (fastify: FastifyInstance, opts: FastifyPluginOptions) => {
-  try {
-    mongoose.connection.on("connected", () => {
-      fastify.log.info({ actor: "MongoDB" }, "connected");
-    });
+  mongoose.connection.on("connected", () => {
+    fastify.log.info({ actor: "MongoDB" }, "connected");
+  });
 
-    mongoose.connection.on("disconnected", () => {
-      fastify.log.error({ actor: "MongoDB" }, "disconnected");
-    });
+  mongoose.connection.on("disconnected", () => {
+    fastify.log.error({ actor: "MongoDB" }, "disconnected");
+  });
 
-    const db = await mongoose.connect(opts.uri, {
-      keepAlive: true
-    });
+  const db = await mongoose.connect(opts.uri, {
+    keepAlive: true
+  });
 
-    const models: Models = {
-      Product: ProductModel,
-      User: UserModel
-    };
+  const models: Models = {
+    Product: ProductModel,
+    User: UserModel
+  };
 
-    const client = db.connection.getClient();
+  const client = db.connection.getClient();
 
-    fastify.decorate("db", { models, client } as Db);
-  } catch (err) {
-    console.warn(err);
-  }
+  fastify.decorate("db", { models, client } as Db);
 };
 
 export default fastifyPlugin(connectDB);
