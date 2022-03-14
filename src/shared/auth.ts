@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { FastifyInstance, FastifyPluginAsync, RouteHandlerMethod } from "fastify";
+import { FastifyInstance, FastifyPluginAsync, preHandlerHookHandler, RouteHandlerMethod } from "fastify";
 import { IUser } from "@/models/user";
 import { UnAuthenticated } from "./errors";
 import fp from "fastify-plugin";
@@ -24,12 +24,11 @@ export const hashPassword = async (plainTextPassword: string) => {
   return bcrypt.hash(plainTextPassword, salt);
 };
 
-const isAuthenticated: RouteHandlerMethod = (request) => {
+const isAuthenticated: preHandlerHookHandler = (request, reply, next) => {
   if (!request.session?.user?.authenticated) {
     throw UnAuthenticated();
   }
-
-  return;
+  next();
 
   // const userSessions = request.sessionStore.get(request?.session?.user.username, (err) => {
   //   console.log(err);
