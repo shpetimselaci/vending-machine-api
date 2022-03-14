@@ -1,5 +1,3 @@
-import path from "path";
-
 const schema = {
   type: "object",
   required: ["PORT", "MONGO_DB_URI", "SESSION_SECRET"],

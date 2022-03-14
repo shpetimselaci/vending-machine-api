@@ -1,4 +1,4 @@
-import { ModelName } from "constants/model-name";
+import { ModelName } from "@/constants/model-name";
 import mongoose, { Model } from "mongoose";
 
 export enum UserRole {
@@ -34,7 +34,8 @@ export const User = new mongoose.Schema<IUser>(
     },
     role: {
       type: String,
-      enum: Object.values(UserRole)
+      enum: Object.values(UserRole),
+      required: true
     }
   },
   {

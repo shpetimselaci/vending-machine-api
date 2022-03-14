@@ -1,30 +1,39 @@
 import fastify from "fastify";
 import cors from "fastify-cors";
 import db from "./models/db";
-import fastifySession from "@fastify/session";
+import fastifySession from "fastify-session";
 import MongoStore from "connect-mongo";
 import swagger from "fastify-swagger";
 import cookie from "fastify-cookie";
 import fastifyEnv from "fastify-env";
-import { Config } from "config";
-import { controllers } from "controllers";
-import { addProtectedRouteDecoration } from "shared/auth";
+import { Config } from "@/config";
+import { addProtectedRouteDecoration } from "@/shared/auth";
+import { controllers } from "@/controllers";
+// import { addProtectedRouteDecoration } from "@shared/auth";
+// import { controllers } from "controllers";
+
+const server = fastify({ logger: true });
 
 export const startServer = async () => {
-  const server = fastify({ logger: true });
-
   await server.register(fastifyEnv, Config);
 
   await server.register(cookie);
 
   await server.register(cors);
-  await server.register(db, { uri: server.config.MONGO_DB_URI });
+  await server.register(db, {
+    uri: process.env.NODE_ENV === "test" ? server.config.MONGO_DB_TEST_URI : server.config.MONGO_DB_URI
+  });
 
   await server.register(fastifySession, {
-    cookieName: "sessionId",
     secret: server.config.SESSION_SECRET,
-    cookie: { secure: process.env.NODE_ENV !== "development", httpOnly: true, maxAge: 100000 },
-    store: MongoStore.create({ client: server.db.client, collectionName: "sessions" })
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+
+      secure: !["development", "test"].includes(process.env.NODE_ENV!)
+    },
+    store: MongoStore.create({ client: server.db.client, collectionName: "sessions" }),
+    logLevel: "debug"
   });
 
   await server.register(addProtectedRouteDecoration);
@@ -47,3 +56,5 @@ export const startServer = async () => {
     });
   });
 };
+
+export default server;

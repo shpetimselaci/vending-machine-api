@@ -1,6 +1,6 @@
 import { RouteHandlerMethod } from "fastify";
-import { UserRole } from "models/user";
-import { Forbidden } from "shared/errors";
+import { UserRole } from "@/models/user";
+import { Forbidden } from "@/shared/errors";
 
 export const roleValidator: (allowedRoles: UserRole[]) => RouteHandlerMethod = (allowedRoles) => (request) => {
   const {

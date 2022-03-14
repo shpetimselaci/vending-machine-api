@@ -1,9 +1,8 @@
-import { RouteShorthandOptions } from "fastify";
 import { Static, Type } from "@sinclair/typebox";
-import { UserRole } from "models/user";
-import { comparePassword, hashPassword } from "shared/auth";
-import { RouteHandlerFunction, RouteHandlerSchema } from "types";
-import { BadRequest } from "shared/errors";
+import { UserRole } from "@/models/user";
+import { comparePassword, hashPassword } from "@/shared/auth";
+import { RouteHandlerFunction, RouteHandlerSchema } from "@/types";
+import { BadRequest } from "@/shared/errors";
 
 const User = Type.Object(
   {
@@ -16,7 +15,6 @@ const User = Type.Object(
   },
   { additionalProperties: false, description: "User Model" }
 );
-
 const CreateUserSchema = Type.Object(
   {
     username: Type.String({ minLength: 6 }),
@@ -42,7 +40,7 @@ const signUpOptions: RouteHandlerSchema = () => ({
   schema: {
     body: CreateUserSchema,
     response: {
-      200: User
+      201: User
     }
   }
 });
@@ -67,7 +65,7 @@ export const signUp: RouteHandlerFunction = (server) =>
 
     const user = await server.db.models.User.create({ ...request.body, password: hashedPassword });
 
-    console.log(user);
+    reply.code(201);
     return user;
   });
 
@@ -81,9 +79,13 @@ export const login: RouteHandlerFunction = (server) =>
     const valid = await comparePassword(password, user.password);
 
     if (valid) {
-      const formattedUserSession = { ...user, loggedIn: true, password: undefined };
-      console.log(request.session);
-
+      const formattedUser = {
+        _id: user._id,
+        authenticated: true,
+        username: user.username,
+        role: user.role,
+        deposit: user.deposit
+      };
       new Promise((resolve, reject) =>
         request.sessionStore.set(user.username, request.session, (err) => {
           if (err) {
@@ -92,7 +94,9 @@ export const login: RouteHandlerFunction = (server) =>
           resolve("");
         })
       );
-      request.session.user = formattedUserSession;
+
+      request.session.user = formattedUser;
+
       return user;
     }
 
@@ -101,7 +105,7 @@ export const login: RouteHandlerFunction = (server) =>
 
 export const logOut: RouteHandlerFunction = (server) =>
   server.post("/logout", logoutOptions(server), async (request, reply) => {
-    if (!request.session?.user?.loggedIn) {
+    if (!request.session?.user?.authenticated) {
       throw BadRequest("You have to be logged in to log out!");
     }
     await new Promise((res, reject) =>

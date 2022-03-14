@@ -1,7 +1,7 @@
 import mongoose, { Document, Model } from "mongoose";
 
-import { ModelName } from "constants/model-name";
-import { UserModel } from "models/user";
+import { ModelName } from "@/constants/model-name";
+import { UserModel } from "@/models/user";
 
 export interface IProduct extends Document {
   amountAvailable: number;

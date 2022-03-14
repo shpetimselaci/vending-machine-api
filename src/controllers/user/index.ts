@@ -1,7 +1,7 @@
 import { RouteShorthandOptions } from "fastify";
 import { Static, Type } from "@sinclair/typebox";
-import { UserRole } from "models/user";
-import { RouteHandlerFunction } from "types";
+import { UserRole } from "@/models/user";
+import { RouteHandlerFunction } from "@/types";
 
 const User = Type.Object(
   {

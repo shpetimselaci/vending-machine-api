@@ -1,19 +1,10 @@
 import bcrypt from "bcrypt";
-import {
-  ContextConfigDefault,
-  FastifyInstance,
-  FastifyPluginAsync,
-  RawReplyDefaultExpression,
-  RawRequestDefaultExpression,
-  RawServerBase,
-  RouteHandlerMethod
-} from "fastify";
-import { RouteGenericInterface } from "fastify/types/route";
-import { IUser } from "models/user";
+import { FastifyInstance, FastifyPluginAsync, RouteHandlerMethod } from "fastify";
+import { IUser } from "@/models/user";
 
 declare module "fastify" {
   interface Session {
-    user: Omit<IUser, "password"> & { loggedIn: boolean };
+    user: Omit<IUser, "password"> & { authenticated: boolean };
   }
   interface FastifyRequest {
     user?: IUser;
@@ -32,7 +23,7 @@ export const hashPassword = async (plainTextPassword: string) => {
 };
 
 const isAuthenticated: RouteHandlerMethod = function isAuthenticated(request) {
-  if (!request.session?.user?.loggedIn) {
+  if (!request.session?.user?.authenticated) {
     throw new Error("User must be authenticated!");
   }
 

@@ -1,7 +1,6 @@
-import { RouteShorthandOptions } from "fastify";
 import { Static, Type } from "@sinclair/typebox";
-import { PaginationQuery, PaginationQueryType } from "shared/pagination";
-import { RouteHandlerFunction, RouteHandlerSchema } from "types";
+import { PaginationQuery, PaginationQueryType } from "@/shared/pagination";
+import { RouteHandlerFunction, RouteHandlerSchema } from "@/types";
 
 const Product = Type.Object({
   // for swagger
