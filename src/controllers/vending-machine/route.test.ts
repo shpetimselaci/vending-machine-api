@@ -101,4 +101,20 @@ test("Testing whether the only get endpoint works", async () => {
   });
 
   expect(JSON.parse(updatedUser.body).deposit).toStrictEqual([5, 10, 20, 50, 100]);
+
+  const resetDeposit = await server.inject({
+    url: "http://localhost:2000/vending-machine/reset",
+    method: "post",
+    headers: { cookie }
+  });
+
+  expect(JSON.parse(resetDeposit.body).deposit).toStrictEqual([]);
+
+  const userWithDepositReseted = await server.inject({
+    url: "http://localhost:2000/user/me",
+    method: "get",
+    headers: { cookie }
+  });
+
+  expect(JSON.parse(userWithDepositReseted.body).deposit).toStrictEqual([]);
 });
