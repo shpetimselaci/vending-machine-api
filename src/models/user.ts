@@ -1,3 +1,4 @@
+import { Coins } from "@/constants/coins";
 import { ModelName } from "@/constants/model-name";
 import mongoose, { Model } from "mongoose";
 
@@ -10,7 +11,7 @@ export interface IUser {
   _id: string;
   username: string;
   password: string;
-  deposit: number;
+  deposit: number[];
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
@@ -31,8 +32,8 @@ export const User = new mongoose.Schema<IUser>(
       required: true
     },
     deposit: {
-      type: Number,
-      default: 0
+      type: [Number],
+      enum: Object.values(Coins)
     },
     role: {
       type: String,

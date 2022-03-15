@@ -7,9 +7,11 @@ enum Limit {
   ONE_HUNDRED = 100
 }
 
-export const PaginationQuery = Type.Object({
-  skip: Type.Optional(Type.Integer({ minimum: 0 })),
-  limit: Type.Optional(Type.Enum(Limit))
-});
+export const PaginationQuery = Type.Optional(
+  Type.Object({
+    skip: Type.Optional(Type.Integer({ minimum: 0 })),
+    limit: Type.Optional(Type.Enum(Limit))
+  })
+);
 
 export type PaginationQueryType = Static<typeof PaginationQuery>;

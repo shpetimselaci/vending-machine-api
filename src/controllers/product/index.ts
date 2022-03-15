@@ -1,44 +1,8 @@
-import { Static, Type } from "@sinclair/typebox";
+import { Static } from "@sinclair/typebox";
 import { PaginationQuery, PaginationQueryType } from "@/shared/pagination";
 import { RouteHandlerFunction, RouteHandlerSchema } from "@/types";
-
-const Product = Type.Object({
-  // for swagger
-  _id: Type.String({ format: "uuid" }),
-  amountAvailable: Type.Integer({ minimum: 0 }),
-  cost: Type.Number({ minimum: 0 }),
-  productName: Type.String(),
-  sellerId: Type.String(),
-  createdAt: Type.String(),
-  updatedAt: Type.String()
-});
-
-const Products = Type.Array(Product);
-
-const CreateProductSchema = Type.Object(
-  {
-    amountAvailable: Type.Integer({ minimum: 0 }),
-    cost: Type.Number({ minimum: 0 }),
-    productName: Type.String()
-  },
-  { additionalProperties: false }
-);
-
-const UpdateProductSchema = Type.Object(
-  {
-    amountAvailable: Type.Optional(Type.Integer({ minimum: 0 })),
-    cost: Type.Optional(Type.Number({ minimum: 0 })),
-    productName: Type.Optional(Type.String())
-  },
-  { additionalProperties: false }
-);
-
-const GetProduct = Type.Object(
-  {
-    id: Type.String()
-  },
-  { additionalProperties: false }
-);
+import { Forbidden, NotFound } from "@/shared/errors";
+import { CreateProductSchema, GetProduct, Products, Product, UpdateProductSchema } from "./schema";
 
 type CreateProductRouteOptionsType = { Body: Static<typeof CreateProductSchema> };
 
@@ -76,7 +40,7 @@ const createProductOptions: RouteHandlerSchema = (server) => ({
       200: Product
     }
   },
-  preHandler: server.authenticated
+  preHandler: [server.authenticated, server.sellerOnly]
 });
 
 const putProductOptions: RouteHandlerSchema = (server) => ({
@@ -86,47 +50,29 @@ const putProductOptions: RouteHandlerSchema = (server) => ({
       200: Product
     }
   },
-  preHandler: server.authenticated
+  preHandler: [server.authenticated, server.sellerOnly]
 });
 
 export const getProduct: RouteHandlerFunction = (server) =>
   server.get<GetProductRouteOptionsType>("/products/:id", getProductIdOptions(server), async (request, reply) => {
-    try {
-      const product = await server.db.models.Product.findById(request.params.id);
-      if (!product) {
-        throw new Error("No Product found");
-      }
-      return reply.code(200).send(product);
-    } catch (error) {
-      request.log.error(error);
-      return reply.send(500);
+    const product = await server.db.models.Product.findById(request.params.id);
+    if (!product) {
+      throw NotFound("No product found with id: ${request.params.id}`");
     }
+    return reply.code(200).send(product);
   });
 
 export const getProducts: RouteHandlerFunction = (server) =>
   server.get<GetProductsRouteOptionsType>("/products", getProductsOptions(server), async (request, reply) => {
-    try {
-      const { limit, skip } = request.query;
-      const products = await server.db.models.Product.find({}, {}, { limit, skip });
-      return products;
-    } catch (error) {
-      request.log.error(error);
-      return reply.send(500);
-    }
+    const { limit, skip } = request.query;
+    const products = await server.db.models.Product.find({}, {}, { limit, skip });
+    return products;
   });
 
 export const createProduct: RouteHandlerFunction = (server) =>
   server.post<CreateProductRouteOptionsType>("/products", createProductOptions(server), async (request, reply) => {
-    try {
-      console.log(request.session.user);
-      const products = await server.db.models.Product.create({ ...request.body, sellerId: request.session.user._id });
-      console.log(products);
-      return products;
-    } catch (error) {
-      console.error(error);
-      request.log.error(error);
-      return reply.send(500);
-    }
+    const products = await server.db.models.Product.create({ ...request.body, sellerId: request.session.user._id });
+    return products;
   });
 
 export const updateProduct: RouteHandlerFunction = (server) =>
@@ -134,29 +80,32 @@ export const updateProduct: RouteHandlerFunction = (server) =>
     "/products/:id",
     putProductOptions(server),
     async (request, reply) => {
-      try {
-        const products = await server.db.models.Product.findOneAndUpdate({ id: request.params.id }, request.body);
-        return products;
-      } catch (error) {
-        request.log.error(error);
-        return reply.send(500);
+      const product = await server.db.models.Product.findOne({ id: request.params.id });
+
+      if (!product) {
+        throw NotFound(`No product found with id: ${request.params.id}`);
       }
+
+      const updatedProduct = await server.db.models.Product?.updateOne({ _id: request.params.id }, request.body);
+      console.log(updatedProduct);
+      return server.db.models.Product.findOne({ id: request.params.id });
     }
   );
 
 export const deleteProduct: RouteHandlerFunction = (server) =>
   server.delete<GetProductRouteOptionsType>("/products/:id", createProductOptions(server), async (request, reply) => {
-    try {
-      const product = await server.db.models.Product.findOneAndDelete({ id: request.params.id });
+    const product = await server.db.models.Product.findOne({ _id: request.params.id });
 
-      if (!product) {
-        throw new Error(`No product with id ${request.params.id} found!`);
-      }
-      return product;
-    } catch (error) {
-      request.log.error(error);
-      return reply.send(500);
+    if (!product) {
+      throw NotFound(`No product with id ${request.params.id} found!`);
     }
+
+    if (product.sellerId !== request.session.user._id) {
+      throw Forbidden("You are not allowed to delete this product");
+    }
+
+    await server.db.models.Product.deleteOne({ _id: product.id });
+    return product;
   });
 
 export default [deleteProduct, updateProduct, createProduct, getProduct, getProducts];

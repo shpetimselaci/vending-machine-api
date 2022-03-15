@@ -1,3 +1,4 @@
+import { Coins } from "@/constants/coins";
 import { UserRole } from "@/models/user";
 import { Type } from "@sinclair/typebox";
 
@@ -5,7 +6,7 @@ export const User = Type.Object(
   {
     // for swagger
     username: Type.String({ minimum: 6 }),
-    deposit: Type.Number({ minimum: 0 }),
+    deposit: Type.Array(Type.Enum(Coins)),
     role: Type.Enum(UserRole),
     createdAt: Type.String(),
     updatedAt: Type.String()

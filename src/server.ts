@@ -8,6 +8,8 @@ import cookie from "fastify-cookie";
 import fastifyEnv from "fastify-env";
 import { Config } from "@/config";
 import authValidatior from "@/shared/auth";
+import roleValidator from "@/shared/roles";
+
 import { controllers } from "@/controllers";
 
 const server = fastify({ logger: true });
@@ -36,6 +38,7 @@ export const startServer = async () => {
 
   await server.register(authValidatior);
 
+  await server.register(roleValidator);
   await server.register(swagger, { routePrefix: `/swagger`, exposeRoute: true, openapi: {} });
 
   controllers.forEach((addRoute) => addRoute(server));

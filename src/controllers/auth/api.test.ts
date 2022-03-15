@@ -9,7 +9,7 @@ beforeAll(async () => {
 afterAll(() => server.close());
 
 test("Testing whether the only get endpoint works", async () => {
-  const user = { username: "user12", role: UserRole.BUYER, password: "123456" };
+  const user = { username: String(Math.random()), role: UserRole.BUYER, password: "123456" };
   const signup = await server.inject({
     url: "http://localhost:2000/signup",
     method: "post",
@@ -31,6 +31,15 @@ test("Testing whether the only get endpoint works", async () => {
 
   const cookie = login.headers["set-cookie"];
   expect(cookie).toBeTypeOf("string");
+
+  const me = await server.inject({
+    url: "http://localhost:2000/user/me",
+    method: "get",
+    headers: { cookie }
+  });
+
+  expect(me.body).toStrictEqual(login.body);
+
   const { body, statusCode, headers, cookies } = await server.inject({
     url: "http://localhost:2000/logout",
     method: "post",
@@ -44,4 +53,28 @@ test("Testing whether the only get endpoint works", async () => {
   expect(headers["set-cookie"]).toBe(undefined);
 
   expect(cookies).length(0);
+
+  const secondLogin = await server.inject({
+    url: "http://localhost:2000/login",
+    method: "post",
+    payload: user
+  });
+
+  const secondCookie = secondLogin.headers["set-cookie"];
+  expect(secondCookie).toBeTypeOf("string");
+
+  const failedProfileFetch = await server.inject({
+    url: "http://localhost:2000/user/delete",
+    method: "delete",
+    headers: { cookie: secondCookie }
+  });
+  expect(failedProfileFetch.statusCode).toBe(200);
+  expect(failedProfileFetch.body).toStrictEqual("User deleted");
+  const thirdLoginThatFails = await server.inject({
+    url: "http://localhost:2000/login",
+    method: "post",
+    payload: user
+  });
+  expect(thirdLoginThatFails.statusCode).toBe(400);
+  expect(JSON.parse(thirdLoginThatFails.body).message).toStrictEqual("Bad Request");
 });

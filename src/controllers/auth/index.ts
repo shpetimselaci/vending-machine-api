@@ -32,10 +32,9 @@ const logoutOptions: RouteHandlerSchema = (server) => ({
 
 export const signUp: RouteHandlerFunction = (server) =>
   server.post<SignUpRouteOptionsType>("/signup", signUpOptions(server), async (request, reply) => {
-    console.log("BODY", request.body);
     const hashedPassword = await hashPassword(request.body.password);
 
-    const user = await server.db.models.User.create({ ...request.body, password: hashedPassword });
+    const user = await server.db.models.User.create({ ...request.body, password: hashedPassword, deposit: [] });
 
     reply.code(201);
     return user;
@@ -56,7 +55,6 @@ export const login: RouteHandlerFunction = (server) =>
         authenticated: true,
         username: user.username,
         role: user.role,
-        deposit: user.deposit,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       };
@@ -80,9 +78,6 @@ export const login: RouteHandlerFunction = (server) =>
 
 export const logOut: RouteHandlerFunction = (server) =>
   server.post("/logout", logoutOptions(server), async (request, reply) => {
-    if (!request.session?.user?.authenticated) {
-      throw BadRequest("You have to be logged in to log out!");
-    }
     await new Promise((res, reject) =>
       request.destroySession((err) => {
         if (err) {
