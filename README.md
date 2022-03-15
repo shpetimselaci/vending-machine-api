@@ -49,5 +49,5 @@ npm run  test // or npm run coverage
 To lint files:
 
 ```js
-npm run install // or npm i
+npm run lint
 ```
