@@ -3,7 +3,8 @@ import mongoose, { Document, Model } from "mongoose";
 import { ModelName } from "@/constants/model-name";
 import { UserModel } from "@/models/user";
 
-export interface IProduct extends Document {
+export interface IProduct {
+  _id: string;
   amountAvailable: number;
   cost: number;
   productName: string;

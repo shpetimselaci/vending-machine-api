@@ -79,15 +79,15 @@ export const updateProduct: RouteHandlerFunction = (server) =>
   server.put<CreateProductRouteOptionsType & GetProductRouteOptionsType>(
     "/products/:id",
     putProductOptions(server),
-    async (request, reply) => {
+    async (request) => {
       const product = await server.db.models.Product.findOne({ id: request.params.id });
 
       if (!product) {
         throw NotFound(`No product found with id: ${request.params.id}`);
       }
 
-      const updatedProduct = await server.db.models.Product?.updateOne({ _id: request.params.id }, request.body);
-      console.log(updatedProduct);
+      await server.db.models.Product?.updateOne({ _id: request.params.id }, request.body);
+
       return server.db.models.Product.findOne({ id: request.params.id });
     }
   );

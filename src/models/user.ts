@@ -33,7 +33,7 @@ export const User = new mongoose.Schema<IUser>(
     },
     deposit: {
       type: [Number],
-      enum: Object.values(Coins)
+      enum: Object.values(Coins).filter((value) => isNaN(Number(value)))
     },
     role: {
       type: String,

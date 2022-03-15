@@ -52,7 +52,9 @@ export const startServer = async () => {
         process.exit(1);
       }
       console.log(`Server listening at ${address}`);
-      console.log(server.printRoutes());
+      if (process.env.NODE_ENV === "development") {
+        console.log(server.printRoutes());
+      }
 
       resolve(server);
     });

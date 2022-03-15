@@ -5,6 +5,7 @@ import { Type } from "@sinclair/typebox";
 export const User = Type.Object(
   {
     // for swagger
+    _id: Type.String({ minimum: 12 }),
     username: Type.String({ minimum: 6 }),
     deposit: Type.Array(Type.Enum(Coins)),
     role: Type.Enum(UserRole),
