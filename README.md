@@ -1,6 +1,6 @@
 # Vending Machine API
 
-This is a REST API made to represent a vending machine, a challenge made from MVPFactory to show my skills.
+This is a REST API made to represent a vending machine, a challenge made from MVPMatch to show my skills.
 
 **Tasks**
 
