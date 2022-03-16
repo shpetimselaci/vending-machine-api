@@ -1,6 +1,7 @@
 import { beforeAll, test, expect, afterAll } from "vitest";
 import server, { startServer } from "@/server";
-import { IUser, UserRole } from "@/models/user";
+import { UserRole } from "@/models/user";
+import { getProfile, logIn, signUp } from "../shared/utils.test";
 
 beforeAll(async () => {
   await startServer();
@@ -10,63 +11,24 @@ afterAll(() => server.close());
 
 test("Testing whether the only get endpoint works", async () => {
   const user = { username: String(Math.random()), role: UserRole.BUYER, password: "123456" };
-  const signup = await server.inject({
-    url: "http://localhost:2000/signup",
-    method: "post",
-    payload: user
-  });
-
-  const parsedUser: IUser = JSON.parse(signup.body);
+  const { parsedUser, response: signup } = await signUp(user);
 
   expect(signup.statusCode).toBe(201);
 
   expect(parsedUser.username).toBe(user.username);
   expect(parsedUser.role).toBe(user.role);
 
-  const login = await server.inject({
-    url: "http://localhost:2000/login",
-    method: "post",
-    payload: user
-  });
+  const { token, loginBody } = await logIn(user);
 
-  const cookie = login.headers["set-cookie"];
-  expect(cookie).toBeTypeOf("string");
+  const me = await getProfile(token);
+  expect(JSON.parse(me.body)).toStrictEqual(loginBody.user);
 
-  const me = await server.inject({
-    url: "http://localhost:2000/user/me",
-    method: "get",
-    headers: { cookie }
-  });
-
-  expect(me.body).toStrictEqual(login.body);
-
-  const { body, statusCode, headers, cookies } = await server.inject({
-    url: "http://localhost:2000/logout",
-    method: "post",
-    payload: user,
-    headers: { cookie }
-  });
-
-  expect(statusCode).toBe(200);
-  expect(body).toStrictEqual("Logout complete");
-
-  expect(headers["set-cookie"]).toBe(undefined);
-
-  expect(cookies).length(0);
-
-  const secondLogin = await server.inject({
-    url: "http://localhost:2000/login",
-    method: "post",
-    payload: user
-  });
-
-  const secondCookie = secondLogin.headers["set-cookie"];
-  expect(secondCookie).toBeTypeOf("string");
+  const { token: secondLoginToken } = await logIn(user);
 
   const failedProfileFetch = await server.inject({
     url: "http://localhost:2000/user/delete",
     method: "delete",
-    headers: { cookie: secondCookie }
+    headers: { authorization: `Bearer ${secondLoginToken}` }
   });
   expect(failedProfileFetch.statusCode).toBe(200);
   expect(failedProfileFetch.body).toStrictEqual("User deleted");

@@ -1,6 +1,6 @@
 const schema = {
   type: "object",
-  required: ["PORT", "MONGO_DB_URI", "SESSION_SECRET"],
+  required: ["PORT", "MONGO_DB_URI", "JWT_SECRET"],
   properties: {
     PORT: {
       type: "string",
@@ -12,7 +12,7 @@ const schema = {
     MONGO_DB_TEST_URI: {
       type: "string"
     },
-    SESSION_SECRET: {
+    JWT_SECRET: {
       type: "string"
     }
   }
@@ -30,7 +30,7 @@ declare module "fastify" {
       TEST_PORT: string;
       MONGO_DB_URI: string;
       MONGO_DB_TEST_URI: string;
-      SESSION_SECRET: string;
+      JWT_SECRET: string;
     };
   }
 }

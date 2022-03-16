@@ -21,20 +21,13 @@ const deleteUserSchema: RouteHandlerSchema = (server) => ({
 
 export const me: RouteHandlerFunction = (server) =>
   server.get("/user/me", getUser(server), async (request) => {
-    return server.db.models.User.findById(request.session.user._id);
+    return request.userObj;
   });
 
 export const deleteUser: RouteHandlerFunction = (server) =>
   server.delete("/user/delete", deleteUserSchema(server), async (request, reply) => {
-    await server.db.models.User.deleteOne({ _id: request.session.user._id });
-    await new Promise((res, reject) =>
-      request.destroySession((err) => {
-        if (err) {
-          reject(err);
-        }
-        res("ok");
-      })
-    );
+    await server.db.models.User.deleteOne({ _id: request.userObj._id });
+
     reply.code(200).send("User deleted");
   });
 

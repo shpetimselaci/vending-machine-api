@@ -1,14 +1,12 @@
 import fastify from "fastify";
 import cors from "fastify-cors";
 import db from "./models/db";
-import fastifySession from "fastify-session";
-import MongoStore from "connect-mongo";
 import swagger from "fastify-swagger";
-import cookie from "fastify-cookie";
 import fastifyEnv from "fastify-env";
 import { Config } from "@/config";
 import authValidatior from "@/shared/auth";
 import roleValidator from "@/shared/roles";
+import fastifyJwt from "fastify-jwt";
 
 import { controllers } from "@/controllers";
 
@@ -17,23 +15,20 @@ const server = fastify({ logger: true });
 export const startServer = async () => {
   await server.register(fastifyEnv, Config);
 
-  await server.register(cookie);
-
-  await server.register(cors);
-  const mongodbURI = process.env.NODE_ENV === "test" ? server.config.MONGO_DB_TEST_URI : server.config.MONGO_DB_URI;
+  const mongodbURI = process.env.NODE_ENV === "test" ? server.config?.MONGO_DB_TEST_URI : server.config.MONGO_DB_URI;
   await server.register(db, {
     uri: mongodbURI
   });
 
-  await server.register(fastifySession, {
-    secret: server.config.SESSION_SECRET,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: false
-    },
-    store: MongoStore.create({ client: server.db.client, collectionName: "sessions" }),
-    logLevel: "debug"
+  await server.register(fastifyJwt, {
+    secret: server.config?.JWT_SECRET
+  });
+
+  await server.register(cors, {
+    origin: true,
+    methods: "GET,PUT,POST,DELETE,OPTIONS",
+
+    credentials: true
   });
 
   await server.register(authValidatior);
@@ -43,7 +38,7 @@ export const startServer = async () => {
 
   controllers.forEach((addRoute) => addRoute(server));
 
-  const port = process.env.NODE_ENV === "test" ? server.config.TEST_PORT : server.config.PORT;
+  const port = process.env.NODE_ENV === "test" ? server.config?.TEST_PORT : server.config?.PORT;
   return new Promise((resolve, reject) => {
     server.listen(Number(port), (err, address) => {
       if (err) {

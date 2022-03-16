@@ -11,18 +11,14 @@ declare module "fastify" {
   }
 }
 
-export const roleValidator: (allowedRoles: UserRole[]) => preHandlerHookHandler =
-  (allowedRoles) => (request, reply, next) => {
-    const {
-      user: { role }
-    } = request.session;
-    if (!allowedRoles.includes(role)) {
-      next(Forbidden(`Only users with role ${allowedRoles.join()} are allowed to do this action`));
+export const roleValidator: (allowedRoles: UserRole[]) => preHandlerHookHandler = (allowedRoles) => async (request) => {
+  const role = request?.userObj?.role;
+  if (!allowedRoles.includes(role!)) {
+    throw Forbidden(`Only users with role ${allowedRoles.join()} are allowed to do this action`);
+  }
 
-      return;
-    }
-    next();
-  };
+  return;
+};
 
 const addRolesValidator: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   fastify.decorate("buyerOnly", roleValidator([UserRole.BUYER]));

@@ -73,9 +73,7 @@ export const buy: RouteHandlerFunction = (server) =>
     buyProductsInVendingMachineSchema(server),
     async (request) => {
       const {
-        session: {
-          user: { _id }
-        },
+        userObj: { _id },
         body: { productId, amount }
       } = request;
       const user = await server.db.models.User.findById(_id);
@@ -98,15 +96,17 @@ export const buy: RouteHandlerFunction = (server) =>
 
       let userAmount = userDeposit?.reduce((a, b) => a + b, 0) || 0;
       if (costToBuy > userAmount) {
-        throw Forbidden("You cannot buy the products with the money you have deposited!");
+        throw Forbidden(`You need an additional ${costToBuy - userAmount}€ to buy this product`);
       }
 
       userAmount = userAmount - costToBuy;
 
       const change = coinChange(userAmount);
 
-      await server.db.models.Product.updateOne({ _id: productId }, { $inc: { amountAvailable: -amount } });
-
+      await Promise.all([
+        server.db.models.Product.updateOne({ _id: productId }, { $inc: { amountAvailable: -amount } }),
+        await server.db.models.User.updateOne({ _id: user?._id }, { $set: { deposit: [] } })
+      ]);
       return {
         change,
         product: { ...product?.toJSON(), amountAvailable: product.amountAvailable - amount },
@@ -117,19 +117,16 @@ export const buy: RouteHandlerFunction = (server) =>
 
 export const deposit: RouteHandlerFunction = (server) =>
   server.post<DepositRouteOptionsType>("/vending-machine/deposit", depositMoneySchema(server), async (request) => {
-    await server.db.models.User.updateOne(
-      { _id: request.session.user._id },
-      { $push: { deposit: request.body.deposit } }
-    );
-    const updatedUser = await server.db.models.User.findById(request.session.user._id);
+    await server.db.models.User.updateOne({ _id: request.userObj._id }, { $push: { deposit: request.body.deposit } });
+    const updatedUser = await server.db.models.User.findById(request.userObj._id);
     return updatedUser;
   });
 
 export const resetDeposit: RouteHandlerFunction = (server) =>
   server.post("/vending-machine/reset", resetDepositSchema(server), async (request) => {
-    await server.db.models.User.updateOne({ _id: request.session.user._id }, { $set: { deposit: [] } });
+    await server.db.models.User.updateOne({ _id: request.userObj._id }, { $set: { deposit: [] } });
 
-    const updatedUser = await server.db.models.User.findById(request.session.user._id);
+    const updatedUser = await server.db.models.User.findById(request.userObj._id);
     return updatedUser;
   });
 

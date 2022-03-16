@@ -1,15 +1,13 @@
 import bcrypt from "bcrypt";
 import { FastifyInstance, FastifyPluginAsync, preHandlerHookHandler } from "fastify";
 import { IUser } from "@/models/user";
-import { UnAuthenticated } from "./errors";
+import { NotFound, UnAuthenticated } from "./errors";
 import fp from "fastify-plugin";
+import server from "@/server";
 
 declare module "fastify" {
-  interface Session {
-    user: Omit<IUser, "password" | "deposit"> & { authenticated: boolean };
-  }
   interface FastifyRequest {
-    user?: IUser;
+    userObj: IUser;
   }
   export interface FastifyInstance {
     authenticated: preHandlerHookHandler;
@@ -25,24 +23,20 @@ export const hashPassword = async (plainTextPassword: string) => {
 };
 
 const isAuthenticated: preHandlerHookHandler = async (request) => {
-  if (!request.session?.user?.authenticated) {
-    const user = await request.server.db.models.User.findById(request.session?.user?._id);
+  try {
+    const user = await request.jwtVerify();
+    const userObj = await server.db.models.User.findById((user as unknown as IUser)._id);
 
-    if (!user) {
-      await new Promise((resolve, reject) =>
-        request.destroySession((err) => {
-          if (err) {
-            reject(err);
-          }
-          resolve("");
-        })
-      );
+    if (!userObj) {
+      throw NotFound("User was deleted!");
     }
+    request.userObj = userObj.toJSON();
 
+    return request;
+  } catch (error) {
+    console.log(error);
     throw UnAuthenticated();
   }
-
-  return "";
 
   // const userSessions = request.sessionStore.get(request?.session?.user.username, (err) => {
   //   console.log(err);

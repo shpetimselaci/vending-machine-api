@@ -31,3 +31,8 @@ export const LoginSchema = Type.Object(
   },
   { additionalProperties: false }
 );
+
+export const loginResponseSchema = Type.Object({
+  user: User,
+  token: Type.String()
+});

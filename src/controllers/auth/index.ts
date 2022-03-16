@@ -2,7 +2,8 @@ import { Static } from "@sinclair/typebox";
 import { comparePassword, hashPassword } from "@/shared/auth";
 import { RouteHandlerFunction, RouteHandlerSchema } from "@/types";
 import { BadRequest } from "@/shared/errors";
-import { CreateUserSchema, LoginSchema, User } from "./schema";
+import { CreateUserSchema, loginResponseSchema, LoginSchema, User } from "./schema";
+import hat from "hat";
 
 type SignUpRouteOptionsType = { Body: Static<typeof CreateUserSchema> };
 
@@ -21,13 +22,9 @@ const loginOptions: RouteHandlerSchema = () => ({
   schema: {
     body: LoginSchema,
     response: {
-      200: User
+      200: loginResponseSchema
     }
   }
-});
-
-const logoutOptions: RouteHandlerSchema = (server) => ({
-  preHandler: server.authenticated
 });
 
 export const signUp: RouteHandlerFunction = (server) =>
@@ -52,41 +49,20 @@ export const login: RouteHandlerFunction = (server) =>
     if (valid) {
       const formattedUser = {
         _id: user._id,
-        authenticated: true,
         username: user.username,
         role: user.role,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        pepper: hat()
       };
 
-      request.session.user = formattedUser;
+      const token = server.jwt.sign(formattedUser, { expiresIn: "7d" });
+      const refreshToken = server.jwt.sign(formattedUser, { expiresIn: "365d" });
 
-      new Promise((resolve, reject) =>
-        request.sessionStore.set(request.session.sessionId, request.session, (err) => {
-          if (err) {
-            reject(err);
-          }
-          resolve("");
-        })
-      );
-
-      return user;
+      return { user, token, refreshToken };
     }
 
     reply.code(400).send("Bad Credentials");
   });
 
-export const logOut: RouteHandlerFunction = (server) =>
-  server.post("/logout", logoutOptions(server), async (request, reply) => {
-    await new Promise((res, reject) =>
-      request.destroySession((err) => {
-        if (err) {
-          reject(err);
-        }
-        res("ok");
-      })
-    );
-    reply.code(200).send("Logout complete");
-  });
-
-export default [signUp, login, logOut];
+export default [signUp, login];
