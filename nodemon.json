@@ -2,6 +2,6 @@
   "watch": ["src"],
   "ignore": ["src/**/*.test.ts", "*.config.ts"],
   "ext": "ts,mjs,js,json,graphql",
-  "exec": "esbuild src/index.ts --bundle --platform=node --target=node16.14.0 --external:./node_modules/* --outfile=./index.js && node ./index.js",
+  "exec": "eslint ./ && esbuild src/index.ts --bundle --platform=node --target=node16.14.0 --external:./node_modules/* --outfile=./index.js && node ./index.js",
   "legacyWatch": true
 }
